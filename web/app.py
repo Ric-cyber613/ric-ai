@@ -3,7 +3,20 @@ from flask_cors import CORS
 import os
 
 from src.ric_ai.ai import RicAI
-from .auth import bp as auth_bp, login_required, csrf_required
+try:
+    # Prefer absolute import when running as module or installed package
+    from web.auth import bp as auth_bp, login_required, csrf_required
+except Exception:
+    try:
+        # Fallback to relative import when running as a package
+        from .auth import bp as auth_bp, login_required, csrf_required  # type: ignore
+    except Exception:
+        # Last resort: provide no-op placeholders so the app can still run for local testing
+        auth_bp = None
+        def login_required(f):
+            return f
+        def csrf_required(f):
+            return f
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 CORS(app)
@@ -30,7 +43,8 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 
 @app.route('/')
 def index():
-    return send_from_directory('static', 'index.html')
+    # Use configured static folder to avoid relying on CWD
+    return send_from_directory(app.static_folder, 'index.html')
 
 
 @app.route('/api/respond', methods=['POST'])
@@ -53,10 +67,9 @@ def api_kb():
     if request.method == 'GET':
         return jsonify({'ok': True, 'kb': ric.kb})
     # require auth + CSRF to add KB entries
-    from .auth import login_required as _lr, csrf_required as _csrf
 
-    @_lr
-    @_csrf
+    @login_required
+    @csrf_required
     def add_entry():
         data = request.json or {}
         q = data.get('question')
@@ -95,17 +108,29 @@ def api_load_model():
 
 @app.route('/api/status', methods=['GET'])
 def api_status():
-    t = ric.transformer
+    t = getattr(ric, 'transformer', None)
     try:
+        transformer_status = {
+            'available': False,
+            'loaded': False,
+            'model': None,
+            'device': None,
+        }
+        if t is not None:
+            try:
+                transformer_status = {
+                    'available': t.is_available(),
+                    'loaded': t.is_loaded(),
+                    'model': getattr(t, 'model_name', None),
+                    'device': getattr(t, 'device', None),
+                }
+            except Exception:
+                app.logger.exception('Error getting transformer status')
+
         status = {
             'ok': True,
             'mode': ric.mode,
-            'transformer': {
-                'available': t.is_available(),
-                'loaded': t.is_loaded(),
-                'model': getattr(t, 'model_name', None),
-                'device': getattr(t, 'device', None),
-            }
+            'transformer': transformer_status,
         }
         # include research cache info if research module is present
         try:
@@ -115,6 +140,7 @@ def api_status():
             status['research_cache'] = None
         return jsonify(status)
     except Exception as e:
+        app.logger.exception('Error in /api/status')
         return jsonify({'ok': False, 'error': str(e)}), 500
 
 
