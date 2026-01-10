@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  web:
+    build: ./web
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app:ro
+    environment:
+      - RICAI_MODE=offline
+      - RICAI_KB_PATH=/app/kb.json
