@@ -34,11 +34,36 @@ app.config.update({
 KB_PATH = os.environ.get('RICAI_KB_PATH', os.path.join(os.getcwd(), '..', 'kb.json'))
 DEFAULT_MODE = os.environ.get('RICAI_MODE', 'offline')  # 'offline' or 'online'
 
-ric = RicAI(kb_path=KB_PATH)
-ric.set_mode(DEFAULT_MODE)
+# Initialize RicAI safely so import-time failures don't break tests or simple imports
+try:
+    ric = RicAI(kb_path=KB_PATH)
+    ric.set_mode(DEFAULT_MODE)
+except Exception as e:
+    app.logger.exception('Failed to initialize RicAI; using fallback stub')
+    class _StubTransformer:
+        def is_available(self):
+            return False
+        def is_loaded(self):
+            return False
 
-# register auth blueprint
-app.register_blueprint(auth_bp, url_prefix='/auth')
+    class _StubRic:
+        mode = DEFAULT_MODE
+        transformer = _StubTransformer()
+        kb = []
+        def set_mode(self, m):
+            self.mode = m
+        def respond(self, *args, **kwargs):
+            return 'Service temporarily unavailable'
+        def add_kb_entry(self, q, a):
+            return {'id': None, 'question': q, 'answer': a}
+
+    ric = _StubRic()
+
+# register auth blueprint (optional)
+if auth_bp is not None:
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+else:
+    app.logger.warning('Auth blueprint not available; running without auth')
 
 
 @app.route('/')
