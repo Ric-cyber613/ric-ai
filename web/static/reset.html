@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ric AI — Password reset</title>
+  <style>body{font-family:Arial;margin:40px}#box{max-width:700px;padding:20px;border:1px solid #eee;border-radius:8px;background:#fafafa}input{display:block;width:100%;padding:8px;margin:8px 0}button{padding:8px 12px;background:#2b7ae4;color:#fff;border:none;border-radius:6px}</style>
+</head>
+<body>
+  <div id="box">
+    <h2>Password reset</h2>
+    <div id="content">Loading...</div>
+  </div>
+  <script>
+    const content = document.getElementById('content');
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+
+    function esc(s){ return String(s||'') }
+
+    if(token){
+      // show password reset form
+      content.innerHTML = `
+        <p>Resetting password for token: <strong>${esc(token)}</strong></p>
+        <input id="pw1" type="password" placeholder="New password" />
+        <input id="pw2" type="password" placeholder="Repeat new password" />
+        <button id="submit">Set new password</button>
+        <div id="msg"></div>
+      `;
+      document.getElementById('submit').onclick = async ()=>{
+        const p1 = document.getElementById('pw1').value;
+        const p2 = document.getElementById('pw2').value;
+        const msg = document.getElementById('msg');
+        if(!p1 || p1 !== p2){ msg.textContent = 'Passwords must match and be non-empty'; return }
+        try{
+          const r = await fetch('/auth/reset', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, password: p1})});
+          const j = await r.json();
+          if(j.ok){ msg.textContent = 'Password reset successful. You may now log in.' } else { msg.textContent = 'Reset failed: ' + (j.error||'unknown') }
+        }catch(e){ msg.textContent = 'Error: ' + e }
+      }
+    } else {
+      // show request reset form
+      content.innerHTML = `
+        <p>Enter your username or email to request a password reset.</p>
+        <input id="ident" placeholder="Username or email" />
+        <button id="request">Request reset</button>
+        <div id="msg"></div>
+      `;
+      document.getElementById('request').onclick = async ()=>{
+        const id = document.getElementById('ident').value.trim();
+        const msg = document.getElementById('msg');
+        if(!id){ msg.textContent = 'Enter username or email'; return }
+        try{
+          const r = await fetch('/auth/request_reset', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({identifier: id})});
+          const j = await r.json();
+          if(j.ok){ msg.textContent = 'If the account exists, a reset email has been sent.' } else { msg.textContent = 'Request failed: ' + (j.error||'unknown') }
+        }catch(e){ msg.textContent = 'Error: ' + e }
+      }
+    }
+  </script>
+</body>
+</html>

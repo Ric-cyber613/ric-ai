@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "question": "what is ric ai",
+    "answer": "Ric AI is a simple local AI assistant implemented in Python. It can answer questions from its knowledge base and generate simple replies.",
+    "tags": [
+      "about"
+    ]
+  },
+  {
+    "id": 2,
+    "question": "how to add knowledge",
+    "answer": "Use the GUI to add or edit knowledge entries, or modify the kb.json file in the application folder.",
+    "tags": [
+      "usage"
+    ]
+  }
+]

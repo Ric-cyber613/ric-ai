@@ -1,0 +1,28 @@
+html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#f7f8fb}
+header{display:flex;align-items:center;padding:12px 24px;background:#ffffff;border-bottom:1px solid #e6e9ef}
+#logo{width:48px;height:48px;margin-right:12px}
+main{display:flex;justify-content:center;padding:24px}
+#chat{width:900px;background:#fff;border-radius:8px;border:1px solid #e6e9ef;padding:12px;box-shadow:0 6px 18px rgba(12,34,56,0.06);display:flex;gap:12px}
+#left{flex:2;display:flex;flex-direction:column}
+#right{flex:1;border-left:1px solid #f0f2f6;padding-left:12px}
+#messages{height:360px;overflow:auto;border:1px solid #eee;padding:10px;background:#fafafa}
+.message{padding:6px;margin:6px;border-radius:6px}
+.message.you{background:#e6f0ff;text-align:right}
+.message.ric{background:#f0f4ff;text-align:left}
+#controls{display:flex;gap:8px;margin-top:12px}
+#input{flex:1;padding:8px;border:1px solid #ddd;border-radius:6px}
+#send{padding:8px 12px;border:none;background:#2b7ae4;color:#fff;border-radius:6px}
+#settings{margin-top:12px;display:flex;gap:12px;align-items:center}
+#kb{margin-bottom:12px}
+#kbList{max-height:160px;overflow:auto;padding:6px;border:1px solid #eee;background:#fff;margin:6px 0}
+#kbList li{cursor:pointer;padding:4px;border-bottom:1px solid #f2f2f2}
+#kbQ,#kbA,#modelName{width:100%;padding:6px;margin:6px 0;border:1px solid #ddd;border-radius:4px}
+#kbAdd,#loadModelBtn{width:100%;padding:8px;border:none;background:#2b7ae4;color:#fff;border-radius:6px}
+#modelStatus{font-size:13px;color:#333;margin-top:6px}
+
+/* auth */
+#auth{margin-bottom:12px}
+#userBox{background:#fafafa;padding:8px;border-radius:6px;border:1px solid #f0f0f0}
+#authForms input{display:block;width:100%;padding:6px;margin:6px 0;border:1px solid #ddd;border-radius:4px}
+#authForms button{padding:6px 8px;margin-right:6px}
+#logoutBtn{background:#d9534f;color:#fff;border:none;padding:6px 8px;border-radius:4px}

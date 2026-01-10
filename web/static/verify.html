@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ric AI — Verify Email</title>
+  <style>body{font-family:Arial;margin:40px}#box{max-width:700px;padding:20px;border:1px solid #eee;border-radius:8px;background:#fafafa}</style>
+</head>
+<body>
+  <div id="box">
+    <h2>Email verification</h2>
+    <div id="status">Verifying...</div>
+  </div>
+  <script>
+    async function run(){
+      const params = new URLSearchParams(location.search);
+      const token = params.get('token');
+      const status = document.getElementById('status');
+      if(!token){ status.textContent = 'No verification token provided.'; return }
+      try{
+        const res = await fetch('/auth/verify?token=' + encodeURIComponent(token));
+        const j = await res.json();
+        if(j.ok){ status.textContent = j.message + ' You may now log in.' }
+        else { status.textContent = 'Verification failed: ' + (j.error || 'unknown') }
+      }catch(e){ status.textContent = 'Error: ' + e }
+    }
+    run();
+  </script>
+</body>
+</html>
