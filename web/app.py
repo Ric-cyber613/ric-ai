@@ -72,6 +72,72 @@ def index():
     return send_from_directory(app.static_folder, 'index.html')
 
 
+@app.route('/robots.txt')
+def robots_txt():
+    # Serve a minimal robots.txt. Use environment variable RICAI_PUBLIC_URL to include sitemap location.
+    public = os.environ.get('RICAI_PUBLIC_URL', 'https://ricai.com')
+    content = f"""User-agent: *
+Allow: /
+Sitemap: {public.rstrip('/')}/sitemap.xml
+"""
+    return app.response_class(content, mimetype='text/plain')
+
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    # Dynamically generate a small sitemap from known public endpoints.
+    public = os.environ.get('RICAI_PUBLIC_URL') or request.host_url.rstrip('/')
+    urls = [
+        f"{public}/",
+        f"{public}/static/index.html",
+        f"{public}/auth/login",
+        f"{public}/auth/register",
+        f"{public}/api/status",
+    ]
+    urlset = "\n".join([
+        f"  <url>\n    <loc>{u}</loc>\n  </url>" for u in urls
+    ])
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{urlset}
+</urlset>"""
+    return app.response_class(xml, mimetype='application/xml')
+
+
+# Google Search verification helpers
+# - If GOOGLE_SITE_VERIFICATION_FILENAME is set, serve that filename at root with the provided content
+# - If GOOGLE_SITE_VERIFICATION_META is set, inject the meta tag into the served index.html
+GOOGLE_SITE_VERIFICATION_FILENAME = os.environ.get('GOOGLE_SITE_VERIFICATION_FILENAME')
+GOOGLE_SITE_VERIFICATION_FILE_CONTENT = os.environ.get('GOOGLE_SITE_VERIFICATION_FILE_CONTENT')
+GOOGLE_SITE_VERIFICATION_META = os.environ.get('GOOGLE_SITE_VERIFICATION_META')
+
+if GOOGLE_SITE_VERIFICATION_FILENAME:
+    filename = GOOGLE_SITE_VERIFICATION_FILENAME
+    def _serve_google_verification_file():
+        content = GOOGLE_SITE_VERIFICATION_FILE_CONTENT or f"{filename}"
+        # Google expects the file to be served from root path
+        return app.response_class(content, mimetype='text/html')
+    app.add_url_rule(f'/{filename}', endpoint='google_verify_file', view_func=_serve_google_verification_file)
+
+
+# Update index route to optionally inject meta verification tag
+@app.route('/')
+def index():
+    # Use configured static folder to avoid relying on CWD
+    if GOOGLE_SITE_VERIFICATION_META:
+        try:
+            path = os.path.join(app.static_folder, 'index.html')
+            with open(path, 'r', encoding='utf-8') as f:
+                html = f.read()
+            if 'google-site-verification' not in html:
+                meta = f'<meta name="google-site-verification" content="{GOOGLE_SITE_VERIFICATION_META}" />'
+                html = html.replace('<head>', '<head>\n    ' + meta, 1)
+            return html, 200, {'Content-Type': 'text/html'}
+        except Exception:
+            app.logger.exception('Failed to inject Google verification meta tag; falling back to static serve')
+    return send_from_directory(app.static_folder, 'index.html')
+
+
 @app.route('/api/respond', methods=['POST'])
 def api_respond():
     data = request.json or {}

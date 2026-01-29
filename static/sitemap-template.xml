@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Replace with your public URL -->
+  <url>
+    <loc>https://ricai.com/</loc>
+  </url>
+  <url>
+    <loc>https://ricai.com/static/index.html</loc>
+  </url>
+  <url>
+    <loc>https://ricai.com/auth/login</loc>
+  </url>
+</urlset>
